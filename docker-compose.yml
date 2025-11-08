@@ -1,0 +1,50 @@
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: telegram_bot_db
+    restart: always
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
+    ports:
+      - "${POSTGRES_PORT}:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - bot_network
+
+  redis:
+    image: redis:7-alpine
+    container_name: telegram_bot_redis
+    restart: always
+    ports:
+      - "${REDIS_PORT}:6379"
+    volumes:
+      - redis_data:/data
+    networks:
+      - bot_network
+
+  bot:
+    build: .
+    container_name: telegram_bot
+    restart: always
+    env_file:
+      - .env
+    depends_on:
+      - postgres
+      - redis
+    networks:
+      - bot_network
+    volumes:
+      - .:/app
+
+volumes:
+  postgres_data:
+  redis_data:
+
+networks:
+  bot_network:
+    driver: bridge
